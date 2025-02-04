@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/cli/go-gh/v2/pkg/auth"
@@ -169,15 +170,21 @@ type graphQLResponse struct {
 }
 
 func graphQLEndpoint(host string) string {
+	proto := "https"
+	switch os.Getenv("GH_NO_TLS") {
+	case "1", "true":
+		proto = "http"
+	}
+
 	if isGarage(host) {
-		return fmt.Sprintf("https://%s/api/graphql", host)
+		return fmt.Sprintf("%s://%s/api/graphql", proto, host)
 	}
 	host = auth.NormalizeHostname(host)
 	if auth.IsEnterprise(host) {
-		return fmt.Sprintf("https://%s/api/graphql", host)
+		return fmt.Sprintf("%s://%s/api/graphql", proto, host)
 	}
 	if strings.EqualFold(host, localhost) {
 		return fmt.Sprintf("http://api.%s/graphql", host)
 	}
-	return fmt.Sprintf("https://api.%s/graphql", host)
+	return fmt.Sprintf("%s://api.%s/graphql", proto, host)
 }
